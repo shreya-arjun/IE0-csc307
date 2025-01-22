@@ -4,8 +4,6 @@ import express from "express";
 const app = express();
 const port = 8000;
 
-app.use(express.json());
-
 const users = {
     users_list: [
       {
@@ -51,6 +49,8 @@ const addUser = (user) => {
   return user;
 };
 
+app.use(express.json());
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
@@ -66,9 +66,9 @@ app.get("/users", (req, res) => {
 
   if (job != undefined) {
     result = result.filter((user) => user["job"] === job);
+  }
 
   res.send(result);
-  }
 });
 
 app.get("/users", (req, res) => {
@@ -84,7 +84,7 @@ app.get("/users", (req, res) => {
 
 app.get("/users", (req, res) => {
   res.send(users);
-});
+  });
 
 app.get("/users/:id", (req, res) => {
   const id = req.params["id"]; //or req.params.id
