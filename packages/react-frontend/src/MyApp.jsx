@@ -36,11 +36,14 @@ function MyApp() {
     postUser(person)
       .then((response) => {
         if (response.status === 201) {
-          setCharacters([...characters, person]);
+          return response.json();
         }
         else {
           console.log('Failed to add user. Status: ${response.status}');
         }
+      })
+      .then((newUser) => {
+        setCharacters([...characters, newUser]);
       })
       .catch((error) => {
         console.log(error);
@@ -48,10 +51,24 @@ function MyApp() {
   }
 
   function removeOneCharacter(index) {
-    const updated = characters.filter((character, i) => {
-      return i !== index;
-    });
-    setCharacters(updated);
+    const characterToRemove = characters[index];
+
+    fetch(`http://localhost:8000/users/${characterToRemove.id}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (response.status === 204) {
+          const updated = characters.filter((_, i) => i !== index);
+          setCharacters(updated);
+        } else if (response.status === 404) {
+          console.log("User not found on the backend.");
+        } else {
+          console.log("Failed to delete user. Status:", response.status);
+        }
+      })
+      .catch((error) => {
+        console.error("Error during delete operation:", error);
+      });
   }
 
   /*function updateList(person) {

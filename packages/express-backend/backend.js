@@ -39,10 +39,8 @@ const users = {
   };
 
 
-const randomID = (min, max) => {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+const randomID = () => {
+  return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 }
   
 
@@ -56,7 +54,7 @@ const findUserById = (id) =>
   users["users_list"].find((user) => user["id"] === id);
 
 const addUser = (user) => {
-  user.id = randomID(1, 999);
+  user.id = randomID();
   users["users_list"].push(user);
   return user;
 };
@@ -112,15 +110,20 @@ app.get("/users/:id", (req, res) => {
 
 app.post("/users", (req, res) => {
   const userToAdd = req.body;
-  addUser(userToAdd);
-  res.status(201).send("User successfully added" );
+  const addedUser = addUser(userToAdd);
+  res.status(201).send(addedUser);
 });
 
 app.delete("/users/:id", (req, res) => {
   const id = req.params["id"];
   let deletedUser = findUserById(id);
-  let updatedList = users["users_list"].filter((user) => user !== deletedUser);
-  res.send(updatedList);
+
+  if (deletedUser) {
+    users["users_list"] = users["users_list"].filter((user) => user.id !== id);
+    res.status(204).send(); // Success: No Content
+  } else {
+    res.status(404).send({ message: "User not found." }); // User not found
+  }
 });
 
 app.listen(port, () => {
