@@ -37,6 +37,13 @@ const users = {
       }
     ]
   };
+
+
+const randomID = (min, max) => {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
   
 
 const findUserByName = (name) => {
@@ -49,15 +56,16 @@ const findUserById = (id) =>
   users["users_list"].find((user) => user["id"] === id);
 
 const addUser = (user) => {
+  user.id = randomID(1, 999);
   users["users_list"].push(user);
   return user;
 };
-
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
+//get users with name and job
 app.get("/users", (req, res) => {
   const name = req.query.name;
   const job = req.query.job;
@@ -74,6 +82,7 @@ app.get("/users", (req, res) => {
   res.send({users_list:result});
 });
 
+//get users with name
 app.get("/users", (req, res) => {
   const name = req.query.name;
   if (name != undefined) {
@@ -85,10 +94,12 @@ app.get("/users", (req, res) => {
   }
 });
 
+//get all users
 app.get("/users", (req, res) => {
   res.send(users);
   });
 
+//get users with id
 app.get("/users/:id", (req, res) => {
   const id = req.params["id"]; //or req.params.id
   let result = findUserById(id);
