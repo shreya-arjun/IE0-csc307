@@ -1,6 +1,19 @@
 // backend.js
+import dotenv from "dotenv";
+import mongoose from "mongoose";
 import express from "express";
 import cors from "cors";
+
+import userService from "./services/user-service.js";
+
+dotenv.config();
+
+const { MONGO_CONNECTION_STRING } = process.env;
+
+mongoose.set("debug", true);
+mongoose
+  .connect(MONGO_CONNECTION_STRING + "users") // connect to Db "users"
+  .catch((error) => console.log(error));
 
 const app = express();
 const port = 8000;
@@ -8,7 +21,7 @@ const port = 8000;
 app.use(cors());
 app.use(express.json());
 
-const users = {
+/*const users = {
     users_list: [
       {
         id: "xyz789",
@@ -36,14 +49,13 @@ const users = {
         job: "Bartender"
       }
     ]
-  };
+  }; */
 
 
-const randomID = () => {
+/*const randomID = () => {
   return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-}
+}*/
   
-
 const findUserByName = (name) => {
   return users["users_list"].filter(
     (user) => user["name"] === name
@@ -63,7 +75,20 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-//get users with name and job
+// get all users, or filter by name/job
+app.get("/users", (req, res) => {
+  const { name, job } = req.query;
+
+  userService
+    .getUsers(name, job)
+    .then((users) => res.send({ users_list: users }))
+    .catch((error) => {
+      console.error("Error finding users:", error);
+      res.status(500).send({ message: "Internal Server Error" });
+    });
+});
+
+/* get users with name and job
 app.get("/users", (req, res) => {
   const name = req.query.name;
   const job = req.query.job;
@@ -95,9 +120,25 @@ app.get("/users", (req, res) => {
 //get all users
 app.get("/users", (req, res) => {
   res.send(users);
-  });
+  }); */
 
-//get users with id
+// GET user by ID
+app.get("/users/:id", (req, res) => {
+  const id = req.params.id;
+
+  userService
+    .findUserById(id)
+    .then((user) => {
+      if (user) res.send(user);
+      else res.status(404).send({ message: "User not found." });
+    })
+    .catch((error) => {
+      console.error("Error finding user:", error);
+      res.status(500).send({ message: "Internal Server Error" });
+    });
+});
+
+/*//get users with id
 app.get("/users/:id", (req, res) => {
   const id = req.params["id"]; //or req.params.id
   let result = findUserById(id);
@@ -106,14 +147,47 @@ app.get("/users/:id", (req, res) => {
   } else {
     res.send(result);
   }
+}); */
+
+// POST - Add a new user
+app.post("/users", (req, res) => {
+  const userToAdd = req.body;
+
+  userService
+    .addUser(userToAdd)
+    .then((addedUser) => res.status(201).send(addedUser))
+    .catch((error) => {
+      console.error("Error adding user:", error);
+      res.status(500).send({ message: "Internal Server Error" });
+    });
 });
 
+/*
 app.post("/users", (req, res) => {
   const userToAdd = req.body;
   const addedUser = addUser(userToAdd);
   res.status(201).send(addedUser);
+}); */
+
+// DELETE user by ID
+app.delete("/users/:id", (req, res) => {
+  const id = req.params.id;
+
+  userService
+    .deleteUserById(id)
+    .then((deletedUser) => {
+      if (!deletedUser) {
+        return res.status(404).send({ message: "User not found." });
+      }
+      res.status(204).send();
+    })
+    .catch((error) => {
+      console.error("Error deleting user:", error);
+      res.status(500).send({ message: "Internal Server Error" });
+    });
 });
 
+/*
 app.delete("/users/:id", (req, res) => {
   const id = req.params["id"];
   let deletedUser = findUserById(id);
@@ -124,7 +198,7 @@ app.delete("/users/:id", (req, res) => {
   } else {
     res.status(404).send({ message: "User not found." }); // User not found
   }
-});
+});*/
 
 app.listen(port, () => {
   console.log(
